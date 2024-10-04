@@ -12,6 +12,7 @@ type Builder struct {
 	pageSize       uint64
 	lowModule      sim.Port
 	numMSHREntry   int
+	deviceID       uint64
 }
 
 // MakeBuilder returns a Builder
@@ -78,6 +79,11 @@ func (b Builder) WithNumMSHREntry(num int) Builder {
 	return b
 }
 
+func (b Builder) WithDeviceID(deviceID uint64) Builder {
+	b.deviceID = deviceID
+	return b
+}
+
 // Build creates a new TLB
 func (b Builder) Build(name string) *TLB {
 	tlb := &TLB{}
@@ -90,6 +96,7 @@ func (b Builder) Build(name string) *TLB {
 	tlb.pageSize = b.pageSize
 	tlb.LowModule = b.lowModule
 	tlb.mshr = newMSHR(b.numMSHREntry)
+	tlb.deviceID = b.deviceID
 
 	b.createPorts(name, tlb)
 

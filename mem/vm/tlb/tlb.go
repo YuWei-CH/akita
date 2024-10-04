@@ -31,6 +31,8 @@ type TLB struct {
 	respondingMSHREntry *mshrEntry
 
 	isPaused bool
+
+	deviceID uint64
 }
 
 // Reset sets all the entries int he TLB to be invalid
@@ -113,6 +115,17 @@ func (tlb *TLB) lookup(now sim.VTimeInSec) bool {
 	mshrEntry := tlb.mshr.Query(req.PID, req.VAddr)
 	if mshrEntry != nil {
 		return tlb.processTLBMSHRHit(now, mshrEntry, req)
+	}
+
+	if tlb.deviceID != req.DeviceID {
+		fetched := tlb.fetchBottom(now, req)
+		if fetched {
+			tlb.topPort.Retrieve(now)
+			tracing.TraceReqReceive(req, tlb)
+			tracing.AddTaskStep(tracing.MsgIDAtReceiver(req, tlb), tlb, "miss")
+			tracing.TraceReqComplete(req, tlb)
+		}
+		return fetched
 	}
 
 	setID := tlb.vAddrToSetID(req.VAddr)
@@ -254,15 +267,17 @@ func (tlb *TLB) parseBottom(now sim.VTimeInSec) bool {
 		return true
 	}
 
-	setID := tlb.vAddrToSetID(page.VAddr)
-	set := tlb.Sets[setID]
-	wayID, ok := tlb.Sets[setID].Evict()
-	if !ok {
-		panic("failed to evict")
+	// Local address case
+	if page.DeviceID == tlb.deviceID {
+		setID := tlb.vAddrToSetID(page.VAddr)
+		set := tlb.Sets[setID]
+		wayID, ok := tlb.Sets[setID].Evict()
+		if !ok {
+			panic("failed to evict")
+		}
+		set.Update(wayID, page)
+		set.Visit(wayID)
 	}
-	set.Update(wayID, page)
-	set.Visit(wayID)
-
 	mshrEntry := tlb.mshr.GetEntry(rsp.Page.PID, rsp.Page.VAddr)
 	tlb.respondingMSHREntry = mshrEntry
 	mshrEntry.page = page
