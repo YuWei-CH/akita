@@ -1,7 +1,6 @@
 package gmmu
 
 import (
-	"fmt"
 	"log"
 	"reflect"
 
@@ -115,10 +114,10 @@ func (gmmu *GMMU) walkPageTable(now sim.VTimeInSec) bool {
 
 		if page.DeviceID == gmmu.deviceID {
 			madeProgress = gmmu.finalizePageWalk(now, i) || madeProgress
-			fmt.Printf("GMMUlocalPageFault,%d,%d,%d,%d,%d\n", gmmu.deviceID, page.DeviceID, page.PID, page.PAddr, page.VAddr)
+			// fmt.Printf("GMMUlocalPageFault,%d,%d,%d,%d,%d\n", gmmu.deviceID, page.DeviceID, page.PID, page.PAddr, page.VAddr)
 		} else {
 			madeProgress = gmmu.processRemoteMemReq(now, i) || madeProgress
-			fmt.Printf("GMMURemotePageFault,%d,%d,%d,%d,%d\n", gmmu.deviceID, page.DeviceID, page.PID, page.PAddr, page.VAddr)
+			// fmt.Printf("GMMURemotePageFault,%d,%d,%d,%d,%d\n", gmmu.deviceID, page.DeviceID, page.PID, page.PAddr, page.VAddr)
 		}
 	}
 
