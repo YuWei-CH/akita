@@ -1,3 +1,6 @@
+// Package gmmu provides the implementation of the Graphics Memory Management Unit (GMMU).
+// It includes structures and methods for handling memory translation, page migration,
+// and other related operations within the virtual memory system.
 package gmmu
 
 import (
@@ -7,16 +10,14 @@ import (
 
 // A Builder can build GMMU component
 type Builder struct {
-	engine                   sim.Engine
-	freq                     sim.Freq
-	log2PageSize             uint64
-	pageTable                vm.PageTable
-	migrationServiceProvider sim.Port
-	maxNumReqInFlight        int
-	pageWalkingLatency       int
-	deviceID                 uint64
-	lowModule                sim.Port
-	isRecording              bool
+	engine             sim.Engine
+	freq               sim.Freq
+	log2PageSize       uint64
+	pageTable          vm.PageTable
+	maxNumReqInFlight  int
+	pageWalkingLatency int
+	deviceID           uint64
+	lowModule          sim.Port
 }
 
 // MakeBuilder creates a new builder
@@ -25,7 +26,6 @@ func MakeBuilder() Builder {
 		freq:              1 * sim.GHz,
 		log2PageSize:      12,
 		maxNumReqInFlight: 16,
-		isRecording:       false,
 	}
 }
 
@@ -50,13 +50,6 @@ func (b Builder) WithLog2PageSize(log2PageSize uint64) Builder {
 // WithPageTable sets the page table that the GMMU uses.
 func (b Builder) WithPageTable(pageTable vm.PageTable) Builder {
 	b.pageTable = pageTable
-	return b
-}
-
-// WithMigrationServiceProvider sets the destination port that can perform
-// page migration.
-func (b Builder) WithMigrationServiceProvider(p sim.Port) Builder {
-	b.migrationServiceProvider = p
 	return b
 }
 
@@ -85,22 +78,12 @@ func (b Builder) WithLowModule(p sim.Port) Builder {
 	return b
 }
 
-// WithRecording sets whether the GMMU is recording
-func (b Builder) WithRecording(isRecording bool) Builder {
-	b.isRecording = isRecording
-
-	return b
-}
-
 func (b Builder) configureInternalStates(gmmu *GMMU) {
-	gmmu.MigrationServiceProvider = b.migrationServiceProvider
-	gmmu.migrationQueueSize = 4096
 	gmmu.maxRequestsInFlight = b.maxNumReqInFlight
 	gmmu.latency = b.pageWalkingLatency
 	gmmu.PageAccessedByDeviceID = make(map[uint64][]uint64)
 	gmmu.deviceID = b.deviceID
 	gmmu.LowModule = b.lowModule
-	gmmu.isRecording = b.isRecording
 }
 
 func (b Builder) createPageTable(gmmu *GMMU) {
@@ -114,8 +97,6 @@ func (b Builder) createPageTable(gmmu *GMMU) {
 func (b Builder) createPorts(name string, gmmu *GMMU) {
 	gmmu.topPort = sim.NewLimitNumMsgPort(gmmu, 4096, name+".ToTop")
 	gmmu.AddPort("Top", gmmu.topPort)
-	gmmu.migrationPort = sim.NewLimitNumMsgPort(gmmu, 1, name+".MigrationPort")
-	gmmu.AddPort("Migration", gmmu.migrationPort)
 	gmmu.bottomPort = sim.NewLimitNumMsgPort(gmmu, 4096, name+".BottomPort")
 	gmmu.AddPort("Bottom", gmmu.bottomPort)
 
