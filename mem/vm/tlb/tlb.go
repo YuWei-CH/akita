@@ -116,6 +116,9 @@ func (tlb *TLB) lookup(now sim.VTimeInSec) bool {
 	if mshrEntry != nil {
 		return tlb.processTLBMSHRHit(now, mshrEntry, req)
 	}
+	if tlb.mshr.IsFull() {
+		return false
+	}
 
 	if tlb.deviceID != req.DeviceID {
 		fetched := tlb.fetchBottom(now, req)

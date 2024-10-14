@@ -1,8 +1,6 @@
 package tlb
 
 import (
-	"log"
-
 	"github.com/sarchlab/akita/v3/mem/vm"
 )
 
@@ -52,7 +50,7 @@ func (m *mshrImpl) Add(pid vm.PID, vAddr uint64) *mshrEntry {
 	}
 
 	if len(m.entries) >= m.capacity {
-		log.Panic("MSHR is full")
+		// log.Panic("MSHR is full")
 	}
 
 	entry := newMSHREntry()
