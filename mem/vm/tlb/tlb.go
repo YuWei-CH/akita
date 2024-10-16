@@ -114,6 +114,9 @@ func (tlb *TLB) lookup(now sim.VTimeInSec) bool {
 	if mshrEntry != nil {
 		return tlb.processTLBMSHRHit(now, mshrEntry, req)
 	}
+	if tlb.mshr.IsFull() {
+		return false
+	}
 
 	setID := tlb.vAddrToSetID(req.VAddr)
 	set := tlb.Sets[setID]
